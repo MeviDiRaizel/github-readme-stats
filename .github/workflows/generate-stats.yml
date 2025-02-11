@@ -1,0 +1,55 @@
+name: Generate Stats and Deploy to GitHub Pages
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # runs daily at 00:00 UTC
+  workflow_dispatch:     # allows you to run it manually
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build or run a script to fetch stats
+        env:
+          PAT: ${{ secrets.PAT_1 }}  # pass the secret token
+        run: |
+          # 
+          # If you want to directly run the "render" script or any custom script:
+          # This step depends on how you modify the code to generate the SVG images
+          #
+          # Example (pseudocode):
+          # node scripts/generate-svg.js --token $PAT
+          #
+          # The idea: generate the SVG files into a folder, e.g. "output/"
+          #
+          echo "Generating GitHub Stats..."
+          # For demonstration, let's say we've modified or created a script that
+          # writes the files into the /output folder.
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Commit and push to gh-pages
+        run: |
+          # Create a new branch for gh-pages if it doesn't exist
+          git checkout -B gh-pages
+          # Move generated SVGs into the root or keep them in a folder
+          # Example: if they're in output/*, copy them into the repo
+          cp -R output/* .
+          git add .
+          git commit -m "chore: update stats [skip ci]" || echo "Nothing to commit"
+          git push origin gh-pages --force
